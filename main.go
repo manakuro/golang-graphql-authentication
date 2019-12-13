@@ -1,6 +1,7 @@
 package main
 
 import (
+	"golang-graphql-authentication/auth"
 	"log"
 
 	"github.com/labstack/echo"
@@ -21,12 +22,25 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+
 	e.GET("/", handler.Welcome())
+	e.POST("/signIn", handler.SignIn())
+
+	// Restricted from here
+	r := e.Group("graphql")
+
+	key, err := auth.GetRSAPublicKey()
+	logFatal(err)
+
+	r.Use(middleware.JWTWithConfig(middleware.JWTConfig{
+		SigningKey:    key,
+		SigningMethod: "RS256",
+	}))
 
 	// graphql
 	h, err := graphql.NewHandler(db)
 	logFatal(err)
-	e.POST("/graphql", echo.WrapHandler(h))
+	r.POST("", echo.WrapHandler(h))
 
 	err = e.Start(":3000")
 	logFatal(err)

@@ -1,1 +1,4 @@
 .idea
+id_rsa
+id_rsa.pub
+id_rsa.pub.pkcs8
